@@ -115,6 +115,11 @@
 * Minimax 알고리즘에서 평가하는 노드의 수를 줄이기 위해 사용
 * alpha와 beta값을 활용하여 평가의 가치가 없는 노드에 대해서는 탐색을 하지 않아 시간성능을 개선 (가지치기가 발생하면 재귀적 트리를 형성하지 않음)
 ```python
+# 함수 인자로 alpha, beta 추가
+cost_tuple, _ = self.minimax(new_board.board, new_weight.board, depth-1, after, turn, alpha, beta)
+cost = cost_tuple[0] - cost_tuple[1]
+```
+```python
 # max값을 선택하는 경우
 if cost > value:
     value = cost
