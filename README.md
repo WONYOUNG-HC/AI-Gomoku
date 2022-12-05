@@ -76,12 +76,13 @@
   ```python
   new_board, new_weight = Board(), Weight()
   # find_possible 함수에서는 (cost, y, x)를 리턴
+  # 튜플에서 위치 정보만 사용
   for _, y, x in self.find_possible(new_weight.board):
-    new_board.board[y][x] = turn
-    new_weight.board[turn-1][y][x] = -turn
-    new_weight.board[after-1][y][x] = -turn
-    new_weight.calc_weight(turn)
-    new_weight.calc_weight(after)
+      new_board.board[y][x] = turn
+      new_weight.board[turn-1][y][x] = -turn
+      new_weight.board[after-1][y][x] = -turn
+      new_weight.calc_weight(turn)
+      new_weight.calc_weight(after)
   ```
   3. 착수된 위치를 바탕으로 재귀함수 호출
      * 자식노드의 갯수가 find_possible 함수의 리턴된 위치의 갯수가 되는 트리를 재귀적으로 형성
@@ -93,15 +94,16 @@
      * 리턴되는 값은 `(AI가 가지는 최대 가중치, 사용자가 가지는 최대 가중치) -> cost_tuple`
      * 승리판정이 이루어 졌으면, 승리한 이용자의 가중치 값은 INF(100000) 부여
      * 이후 cost값은 `cost_tuple[0] - cost_tuple[1]`로 평가 (AI의 최대 가중치 - 사용자의 최대 가중치)
+       * AI 입장에서는 max값을 선택해야 자신에게 유리한 형세이고,  사용자 입장에서는 min값을 선택해야 AI에게 불리한 형세가됨 
   5. 이후 value값 평가에서는 AI 입장에서는 max값, 사용자 입장에서는 min값을 선택
      * value는 함수에서 가지고 있는 현재의 값, cost값은 새로 리턴된값
      * cost값과 vlaue값을 비교해 각자 우선시 되는 값으로 갱신해주고, 리턴을 위한 vlaue_tuple 사용
      * vlalue값이 cost값으로 갱신되었다면, cost값이 발생한 위치는 반복문에서 사용된 현재 위치이므로 position 또한 갱신
      ```python
      cost_tuple, _ = self.minimax(new_board.board, new_weight.board, depth-1, after, turn)
-       cost = cost_tuple[0] - cost_tuple[1]
-         # AI가 max값을 선택하는 경우
-         if cost > value:
+     cost = cost_tuple[0] - cost_tuple[1]
+     # max값을 선택하는 경우
+     if cost > value:
          value = cost
          value_tuple = (cost_tuple[0], cost_tuple[1])
          position = (y, x)
@@ -109,16 +111,53 @@
    6. 최종적으로 리턴되는 값은 `(value_tuple, position)`으로 함수가 끝나지 않았다면 부모 노드의 값을 선택할때 value_tuple을 이용하고, 마지막 함수가 끝나다면 최종적으로 position 위치에 AI가 착수
    
 ### 시간성능 향상
-#### Alphabeta-prungin
+#### Alpha-beta pruning
 * Minimax 알고리즘에서 평가하는 노드의 수를 줄이기 위해 사용
-* alpha와 beta값을 활용하여 평가의 가치가 없는 노드에 대해서는 탐색을 하지 않아 탐색 시간성능을 개선 (가지치기가 발생하면 재귀적 트리를 형성하지 않음)
+* alpha와 beta값을 활용하여 평가의 가치가 없는 노드에 대해서는 탐색을 하지 않아 시간성능을 개선 (가지치기가 발생하면 재귀적 트리를 형성하지 않음)
 ```python
-    if cost < value:
-        value = cost
-        value_tuple = (cost_tuple[0], cost_tuple[1])
-        position = (y, x)
-        beta = min(beta, value)
-    # 알파베타 가지치기
-    if value <= alpha:
-        return value_tuple, position
-        ```
+# max값을 선택하는 경우
+if cost > value:
+    value = cost
+    value_tuple = (cost_tuple[0], cost_tuple[1])
+    position = (y, x)
+    alpha = max(alpha, value)
+# 알파베타 가지치기
+if value >= beta:
+    return value_tuple, position
+```
+```python
+# min값을 선택하는 경우
+if cost < value:
+    value = cost
+    value_tuple = (cost_tuple[0], cost_tuple[1])
+    position = (y, x)
+    beta = min(beta, value)
+# 알파베타 가지치기
+if value <= alpha:
+    return value_tuple, position
+```
+
+#### find_possible 함수 조정
+* 반복문에서 find_possible 함수에서 리턴한 위치의 갯수만큼 자식노드가 재귀적으로 형성됨
+* 리턴하는 위치의 갯수를 조정함으로써 트리의 규모를 제한시킴으로 탐색할 노드의 갯수를 감소시켜 시간성능 개선
+* 힙을 사용하여 가중치값 기준 상위 15개의 위치를 리턴
+* 상위 15번째 가중치값이 중복된 경우(공동 15등 발생) 해당 가중치값의 위치는 15개를 다소 초과하여서 리턴시킴
+* 가중치가 100이상이 발견될 경우 100미만의 가중치는 모두 무시하고 100이상의 가중치값을 가지는 위치들만 리턴
+  * 가중치가 100이상이면 적수가 없는 2목이 공통적으로 겹쳐서 3-3이 가능하게 만드는 위치이거나 적수가 없는 3목 이상이므로 해당 위치는 무조건 막아야 된다 판단하에 나머지 위치들을 무시하고 계산
+
+#### 시간성능 개선 결과
+* 초기 Alpha-beta pruning를 적용하지 않고, find_possible에서 가중치가 0을 초과하는 위치에 대해서만 리턴하였을떄 depth=3 기준으로 평균 3~5초 정도 소모
+* 두가지 개선점을 모두 적용했을때 detph=5기준으로 평균 2~3초 소모
+* 대국의 중반부터 가중치가 100이상의 위치가 나오는 빈도가 높아질수록 즉각적인 착수가 이루어짐
+* 시간성능 개선과 함께 그에 따른 높은 depth값 설정 가능에 따른 정확도 또한 상승
+
+## 결론
+* 지인들 상대로 대국을 진행했을때 승률 60% 정도를 기록
+* 지속적인 가중치값 업데이트와 안정화 작업을 통해 승률은 더욱 향상될것으로 보임
+* 오목에서 흑이 공격권을 가져 보통 렌주룰을 적용하게 되지만, AI는 백임에도 불구하고 빠르게 공격권을 가져가는 모습을 보임에 상당히 긍정적으로 평가
+  * Minimax 알고리즘의 연산으로 인한 결과로 생각
+* 계속된 업데이트로 더욱 향상된 프로그램을 되기를 기대
+
+## 참조
+* 이경호, & 한원근. (2018). 게임 트리와 알파-베타 가지치기를 이용한 오목 프로그램의 설계 및 구현. 한국컴퓨터정보학회 학술발표논문집, 26(2), 427-430.
+* Russell, S, J. & Norvig, P. (2009). Artificial Intelligence (3rd Ed.), A Modern Approach (pp. 161-167). Prentice Hall
