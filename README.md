@@ -68,7 +68,7 @@
         
 ### AI의 착수
   * Minimax 알고리즘을 이용해 몇수 앞을 예상하여 최적의 수를 계산
-  * 함수에 사용되는 기본적인 인자 : (오목판, 가중치판, depth, turn, after)
+  * 함수에 사용되는 기본적인 인자 : `(오목판, 가중치판, depth, turn, after)`
   
   1. new_board, new_weight를 통해 현재 형세에 대하 오목판과 가중치판을 복사
   2. 반복문에서 find_possible 함수를 통해 리턴된 위치에 대해 각각 착수
@@ -83,8 +83,30 @@
     new_weight.calc_weight(after)
   ```
   3. 착수된 위치를 바탕으로 재귀함수 호출
-  ```pyton
-  self.minimax(new_board.board, new_weight.board, depth-1, after, turn)
-  ```<br/>
-    * 자식노드의 갯수가 find_possible 함수에서 리턴되는 위치의 갯수가 되는 트리를 재귀적으로 형성
+     * 자식노드의 갯수가 find_possible 함수의 리턴된 위치의 갯수가 되는 트리를 재귀적으로 형성
+     ```python
+     self.minimax(new_board.board, new_weight.board, depth-1, after, turn)
+     ```  
   4. 탈출조건에 부합하면 형세평가
+     * `depth == 0 or is_win or is_full`
+     * 리턴되는 값은 `(AI가 가지는 최대 가중치, 사용자가 가지는 최대 가중치) -> cost_tuple`
+     * 승리판정이 이루어 졌으면, 승리한 이용자의 가중치 값은 INF(100000) 부여
+     * 이후 cost값은 `cost_tuple[0] - cost_tuple[1]`로 평가 (AI의 최대 가중치 - 사용자의 최대 가중치)
+  5. 이후 value값 평가에서는 AI 입장에서는 max값, 사용자 입장에서는 min값을 선택
+     * value는 함수에서 가지고 있는 현재의 값, cost값은 새로 리턴된값
+     * cost값과 vlaue값을 비교해 각자 우선시 되는 값으로 갱신해주고, 리턴을 위한 vlaue_tuple 사용
+     * vlalue값이 cost값으로 갱신되었다면, cost값이 발생한 위치는 반복문에서 사용된 현재 위치이므로 position 또한 갱신
+     ```python
+     cost_tuple, _ = self.minimax(new_board.board, new_weight.board, depth-1, after, turn)
+       cost = cost_tuple[0] - cost_tuple[1]
+         # AI가 max값을 선택하는 경우
+         if cost > value:
+         value = cost
+         value_tuple = (cost_tuple[0], cost_tuple[1])
+         position = (y, x)
+     ```
+   6. 최종적으로 리턴되는 값은 `(value_tuple, position)`으로 함수가 끝나지 않았다면 부모 노드의 값을 선택할때 value_tuple을 이용하고, 마지막 함수가 끝나다면 최종적으로 position 위치에 AI가 착수
+   
+### 시간성능 향상
+#### Alphabeta-prungin
+* Minimax 알고리즘에서 
