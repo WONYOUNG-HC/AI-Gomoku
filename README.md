@@ -108,7 +108,7 @@
          value_tuple = (cost_tuple[0], cost_tuple[1])
          position = (y, x)
      ```
-   6. 최종적으로 리턴되는 값은 `(value_tuple, position)`으로 함수가 끝나지 않았다면 부모 노드의 값을 선택할때 value_tuple을 이용하고, 마지막 함수가 끝나다면 최종적으로 position 위치에 AI가 착수
+   6. 최종적으로 리턴되는 값은 `(value_tuple, position)`으로, 함수가 끝나지 않았다면 부모 노드의 값을 선택할때 value_tuple을 이용하고, 마지막 함수가 끝나다면 최종적으로 position 위치에 AI가 착수
    
 ### 시간성능 향상
 #### Alpha-beta pruning
