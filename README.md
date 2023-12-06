@@ -1,4 +1,4 @@
-# AI-Gomok
+# AI-Gomoku
 **AI를 통해 1인이서 즐길수 있는 오목 프로그램**
 <br/><br/>
 <img src = "https://user-images.githubusercontent.com/118702713/205521248-0e5d9ba8-13e0-4215-b67b-85d1e9181418.png" width="60%" height="60%">
